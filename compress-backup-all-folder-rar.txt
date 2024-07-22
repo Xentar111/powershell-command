@@ -1,0 +1,40 @@
+function Compress-And-BackupDirectories {
+    param (
+        [string]$path = "."
+    )
+
+    # Get all the directories in the specified path
+    $directories = Get-ChildItem -Path $path -Directory
+
+    # Initialize a counter for batching
+    $batchSize = 10
+    $currentBatchCount = 0
+
+    # Loop through each directory
+    foreach ($dir in $directories) {
+        # Define the path to the directory
+        $dirPath = $dir.FullName
+        
+        # Define the name of the RAR file (same as directory name but with .rar extension)
+        $rarFileName = "$($dirPath).rar"
+        
+        # Run the WinRAR command to compress the directory
+        & "C:\Program Files\WinRAR\WinRAR.exe" a -r -ep1 "$rarFileName" "$dirPath"
+        
+        # Check if the RAR file was created successfully
+        if (Test-Path $rarFileName) {
+            # Remove the original directory if the RAR file was created
+            Remove-Item -Path $dirPath -Recurse -Force
+        }
+        
+        # Increment the current batch counter
+        $currentBatchCount++
+
+        # If we've processed a full batch, wait for a moment to avoid overloading the system
+        if ($currentBatchCount -ge $batchSize) {
+            Write-Output "Waiting for a moment to avoid overload..."
+            Start-Sleep -Seconds 10
+            $currentBatchCount = 0
+        }
+    }
+}
