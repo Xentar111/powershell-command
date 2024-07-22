@@ -1,0 +1,15 @@
+function Get-FolderSizestoCsv {
+    param (
+        [string]$Path = "."
+    )
+
+    $folders = Get-ChildItem -Directory -Path $Path
+    $results = foreach ($folder in $folders) {
+        $size = (Get-ChildItem $folder.FullName -File -Recurse | Measure-Object -Property Length -Sum).Sum
+        [PSCustomObject]@{
+            Folder = $folder.FullName
+            SizeMB = [math]::Round($size / 1MB, 2)
+        }
+    }
+    $results | Export-Csv -Path "memoria.csv" -NoTypeInformation
+}
